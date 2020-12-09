@@ -117,7 +117,7 @@ int main(int argc, char const *argv[])
     const double gyro = D(n, axis);
     gyrof(n) = filter.apply(gyro);
   }
-  
+
 
   //
   // Timing stats

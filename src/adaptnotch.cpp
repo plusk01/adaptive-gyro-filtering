@@ -163,8 +163,8 @@ double AdaptiveNotch::findFreqPeak()
   }
 
   // accumulate lower shoulder unless it would be DC bin
-  shoulderBin = binMax - 1;
-  if (shoulderBin > 0) {
+  if (binMax > 1) {
+    shoulderBin = binMax - 1;
     sq = Y(shoulderBin) * Y(shoulderBin);
     fftSum += sq;
     fftWeightedSum += sq * shoulderBin;
@@ -173,11 +173,20 @@ double AdaptiveNotch::findFreqPeak()
   // calculate peak freq from weighted bins
   double centerFreq = peakFreq_;
   if (fftSum > 0) {
-    double meanIdx = fftWeightedSum / fftSum;
+    const double meanIdx = fftWeightedSum / fftSum;
     centerFreq = meanIdx * fres_;
   }
   centerFreq = utils::clamp(centerFreq,
                 static_cast<double>(min_hz_), static_cast<double>(max_hz_));
+
+  //
+  // Dynamic smoothing of peak freq estimate
+  //
+
+  // move to big peaks fast
+  const double alpha = 0.1;
+  const double gamma = utils::clamp(dataMax / dataMin, 1., 0.8/alpha);
+  centerFreq = peakFreq_ + alpha * gamma * (centerFreq - peakFreq_);
 
   return centerFreq;
 }
