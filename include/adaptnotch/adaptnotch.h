@@ -203,7 +203,7 @@ namespace adaptnotch {
     {
       int Fs = 500; ///< sample rate of input data
       int NFFT = 128; ///< buffer and FFT length
-      int dual_notch_width_percent = 8; ///< 0 width is single notch
+      int dual_notch_width_percent = 2; ///< 0 width is single notch
       int Q = 360; ///< bandwidth of notch
       int min_hz = 60; ///< lower bound of peak detection
       int max_hz = 200; ///< upper bound of peak detection
@@ -223,6 +223,7 @@ namespace adaptnotch {
 
     // \brief Parameter initialization
     int fft_bin_count_; ///< num useful bins for real input, excl. Nyquist bin
+    bool dual_notch_; ///< use two notch filters or one
     double notch1_ctr_, notch2_ctr_; ///< dual notch scale factors
     double Q_; ///< Filter quality factor
     int min_hz_, max_hz_; ///< search range for peaks

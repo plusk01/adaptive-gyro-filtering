@@ -16,8 +16,14 @@ AdaptiveNotch::AdaptiveNotch(const Params& params)
 {
   fft_bin_count_ = params_.NFFT / 2;
 
-  notch1_ctr_ = 1 - params_.dual_notch_width_percent / 100.0;
-  notch2_ctr_ = 1 + params_.dual_notch_width_percent / 100.0;
+  // two notch filters can be composed into a dual notch filter to increase
+  // the stopband without increasing sample delay too much.
+  dual_notch_ = (params_.dual_notch_width_percent != 0);
+  if (dual_notch_) {
+    notch1_ctr_ = 1 - params_.dual_notch_width_percent / 100.0;
+    notch2_ctr_ = 1 + params_.dual_notch_width_percent / 100.0;
+  }
+
   Q_ = params_.Q / 100.0;
 
   // calculate frequency range to search for peaks over
@@ -64,14 +70,22 @@ double AdaptiveNotch::apply(double x)
 
     peakFreq_ = findFreqPeak();
 
-    // updateNotch(peakFreq_);
+    // update notch filters
+    if (dual_notch_) {
+      notch1_->update(peakFreq_ * notch1_ctr_, params_.Fs, Q_);
+      notch2_->update(peakFreq_ * notch2_ctr_, params_.Fs, Q_);
+    } else {
+      notch1_->update(peakFreq_, params_.Fs, Q_);
+    }
   }
 
   //
   // Apply notch filter
   //
 
-  double y = x;
+  double y = notch1_->apply(x);
+  if (dual_notch_) y = notch2_->apply(y);
+
   return y;
 }
 
@@ -89,8 +103,12 @@ void AdaptiveNotch::reset()
   input_samples_ = 0;
 
   // initialize notch filters
-  notch1_.reset(new BiquadNotch(peakFreq_ * notch1_ctr_, params_.Fs, Q_));
-  notch2_.reset(new BiquadNotch(peakFreq_ * notch2_ctr_, params_.Fs, Q_));
+  if (dual_notch_) {
+    notch1_.reset(new BiquadNotch(peakFreq_ * notch1_ctr_, params_.Fs, Q_));
+    notch2_.reset(new BiquadNotch(peakFreq_ * notch2_ctr_, params_.Fs, Q_));
+  } else {
+    notch1_.reset(new BiquadNotch(peakFreq_, params_.Fs, Q_));
+  }
 }
 
 // ----------------------------------------------------------------------------

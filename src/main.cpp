@@ -102,7 +102,6 @@ int main(int argc, char const *argv[])
   //
 
   adaptnotch::AdaptiveNotch::Params params;
-
   adaptnotch::AdaptiveNotch filter(params);
 
   //
@@ -131,6 +130,17 @@ int main(int argc, char const *argv[])
   std::cout << "Processed " << timu << " seconds (" << N << " samples) of IMU";
   std::cout << " data in " << duration << " seconds" << std::endl;
   std::cout << "Real-time factor: " << timu / duration << std::endl;
+
+  //
+  // Write data to file
+  //
+
+  Eigen::MatrixXd out(N, 3);
+  out << Eigen::VectorXd::LinSpaced(N, 0, N*Ts), D.col(axis), gyrof;
+
+  std::ofstream of("data_processed.txt");
+  of << out << std::endl;
+  of.close();
 
   return 0;
 }
