@@ -12,6 +12,9 @@
 #include <string>
 
 #include <Eigen/Dense>
+#include <unsupported/Eigen/FFT>
+
+#include <plot.hpp>
 
 #include <adaptnotch/adaptnotch.h>
 
@@ -22,7 +25,7 @@ using Data = Eigen::Matrix<double, Eigen::Dynamic, DATUMS>;
 
 void usage(int argc, char const *argv[])
 {
-  std::cout << argv[0] << " <input csv data> [axis]" << std::endl << std::endl;
+  std::cout << argv[0] << " <input csv data> [axis] [plot]" << std::endl << std::endl;
   std::cout << "\tRun adaptive notching algorithm on gyro data stored in CSV.";
   std::cout << std::endl << "\t";
   std::cout << "CSV file expected to have been generated from sfpro or to be ";
@@ -30,6 +33,10 @@ void usage(int argc, char const *argv[])
   std::cout << "in same format. A gyro axis to analyze may be specified as";
   std::cout << std::endl << "\t";
   std::cout << "(1, 2, 3) which corresponds to axes (x, y, z).";
+  std::cout << std::endl << std::endl;
+  std::cout << "\tIf a 3rd argument is specified (e.g., '1'), an ASCII plot";
+  std::cout << std::endl << "\t";
+  std::cout << "of the pre- and post-spectrum is shown in the terminal.";
   std::cout << std::endl << std::endl;
 }
 
@@ -67,24 +74,86 @@ Data parseCSV(const std::string& file)
 
 // ----------------------------------------------------------------------------
 
+void plotResults(const adaptnotch::AdaptiveNotch& filter,
+            const Eigen::VectorXd& gyro, const Eigen::VectorXd& gyrof, int n)
+{
+  static const int N = filter.params().NFFT;
+  static Eigen::FFT<double> fft;
+  static plot::TerminalInfo term;
+  static bool init = false;
+  if (!init) {
+    term.detect();
+    fft.SetFlag(Eigen::FFT<double>::Unscaled);
+    fft.SetFlag(Eigen::FFT<double>::HalfSpectrum);
+    init = true;
+  }
+  constexpr float ymax = 0.2f; // arbitrary FFT mag scaling
+  static plot::RealCanvas<plot::BrailleCanvas> prefilter({ { 0.0f, ymax }, { N/2.0f, 0.0f } }, plot::Size(60, 10), term);
+  static plot::RealCanvas<plot::BrailleCanvas> postfilter({ { 0.0f, ymax }, { N/2.0f, 0.0f } }, plot::Size(60, 10), term);
+
+  // Build block layout
+  auto layout =
+      plot::alignment(
+          { term.size().x, 0 },
+          plot::margin(
+                  plot::vbox(
+                      plot::frame(u8"Original Spectrum", plot::Align::Center, &prefilter),
+                      plot::frame(u8"Filtered Spectrum", plot::Align::Center, &postfilter))));
+
+  // pre-filter spectrum
+  const Eigen::VectorXd Y = filter.spectrum() / N;
+
+  // select N most recent filtered measurements
+  const size_t s = (n-N<0) ? 0 : n-N;
+  const Eigen::VectorXd yf = gyrof.segment(s,N);
+
+  // post-filter spectrum
+  Eigen::VectorXcd Yfc;
+  fft.fwd(Yfc, yf);
+  const Eigen::VectorXd Yf = Yfc.array().abs() / N;
+
+  // Plot spectrum pre-filtering
+  prefilter.clear();
+  for (size_t i=1; i<N/2; i++) {
+    prefilter.path(plot::palette::royalblue,{{static_cast<float>(i-1), static_cast<float>(Y(i-1))},
+                                          {static_cast<float>(i), static_cast<float>(Y(i))}});
+  }
+
+  // Plot spectrum post-filtering
+  postfilter.clear();
+  for (size_t i=1; i<N/2; i++) {
+    postfilter.path(plot::palette::royalblue,{{static_cast<float>(i-1), static_cast<float>(Yf(i-1))},
+                                          {static_cast<float>(i), static_cast<float>(Yf(i))}});
+  }
+
+  for (auto const& line: layout)
+    std::cout << term.clear_line() << line << std::endl;
+  std::cout << term.move_up(layout.size().y) << std::flush;
+}
+
+// ----------------------------------------------------------------------------
+
 int main(int argc, char const *argv[])
 {
 
   int axis = 1;     ///< x, y, or z axis of gyro to analyze
   std::string file; ///< input data from IMU
+  bool shouldPlot = false; ///< show FFT plots in terminal
 
   if (argc < 2) {
     std::cerr << "Not enough input arguments." << std::endl << std::endl;
     usage(argc, argv);
     return -1;
-  } else if (argc == 2) {
+  } else if (argc >= 2) {
     file = std::string(argv[1]);
   }
 
-  if (argc == 3) {
+  if (argc >= 3) {
     axis = std::stoi(argv[2]);
     if (axis < 1 || axis > 3) axis = 1;
   }
+
+  if (argc >= 4) shouldPlot = true;
 
   //
   // Process raw IMU data
@@ -115,6 +184,7 @@ int main(int argc, char const *argv[])
   for (size_t n=0; n<N; n++) {
     const double gyro = D(n, axis);
     gyrof(n) = filter.apply(gyro);
+    if (shouldPlot) plotResults(filter, D.col(axis), gyrof, n);
   }
 
 
