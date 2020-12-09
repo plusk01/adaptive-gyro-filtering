@@ -18,6 +18,7 @@ AdaptiveNotch::AdaptiveNotch(const Params& params)
 
   notch1_ctr_ = 1 - params_.dual_notch_width_percent / 100.0;
   notch2_ctr_ = 1 + params_.dual_notch_width_percent / 100.0;
+  Q_ = params_.Q / 100.0;
 
   // calculate frequency range to search for peaks over
   min_hz_ = params_.min_hz;
@@ -83,8 +84,13 @@ void AdaptiveNotch::reset()
   // initialize peak frequency estimator
   peakFreq_ = max_hz_;
 
+  // reset downsample accumulator
   input_accumulator_ = 0;
   input_samples_ = 0;
+
+  // initialize notch filters
+  notch1_.reset(new BiquadNotch(peakFreq_ * notch1_ctr_, params_.Fs, Q_));
+  notch2_.reset(new BiquadNotch(peakFreq_ * notch2_ctr_, params_.Fs, Q_));
 }
 
 // ----------------------------------------------------------------------------
