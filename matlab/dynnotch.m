@@ -246,25 +246,25 @@ for i = 1:N
         binMax = fix(state.centerFreq(axis) / fftResolution);
     else % there was a max, find min
         for ii = binMax-1:-1:1 % look for min below max
-            dataMin = state.fftData(ii+1);
-            if state.fftData(ii) > state.fftData(ii+1), break; end
+            dataMin = state.fftData(axis,ii+1);
+            if state.fftData(axis,ii) > state.fftData(axis,ii+1), break; end
         end
         for ii = binMax+1:(FFT_BIN_COUNT-1) % look for min above max
-            dataMinHi = state.fftData(ii+1);
-            if state.fftData(ii+1) < state.fftData(ii), break; end
+            dataMinHi = state.fftData(axis,ii+1);
+            if state.fftData(axis,ii+1) < state.fftData(axis,ii), break; end
         end
     end
     dataMin = min(dataMin, dataMinHi);
     
     % accumulate fftSum and fftWeightedSum from peak bin, and shoulder bins either side of peak
-    squaredData = state.fftData(binMax+1) ^ 2;
+    squaredData = state.fftData(axis,binMax+1) ^ 2;
     fftSum = squaredData;
     fftWeightedSum = squaredData * binMax;
     
     % accumulate upper shoulder unless it would be FFT_BIN_COUNT
     shoulderBin = binMax + 1;
     if shoulderBin < FFT_BIN_COUNT
-        squaredData = state.fftData(shoulderBin+1) ^ 2;
+        squaredData = state.fftData(axis,shoulderBin+1) ^ 2;
         fftSum = fftSum + squaredData;
         fftWeightedSum = fftWeightedSum + squaredData * shoulderBin;
     end
@@ -272,7 +272,7 @@ for i = 1:N
     % accumulate lower shoulder unless lower shoulder would be bin 0 (DC)
     if binMax > 1
         shoulderBin = binMax - 1;
-        squaredData = state.fftData(shoulderBin+1) ^ 2;
+        squaredData = state.fftData(axis,shoulderBin+1) ^ 2;
         fftSum = fftSum + squaredData;
         fftWeightedSum = fftWeightedSum + squaredData * shoulderBin;
     end
