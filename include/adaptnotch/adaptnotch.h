@@ -38,7 +38,7 @@ namespace adaptnotch {
       // push the remaining (wrapped) elements onto end of v
       if (idx > 0) {
         for (size_t i=m; i<data_.size(); ++i) {
-          v(i) = data_(m-i);
+          v(i) = data_(i-m);
         }
       }
       return v;
