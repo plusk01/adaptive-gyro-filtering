@@ -216,6 +216,20 @@ namespace adaptnotch {
     
     double apply(double x);
 
+    /**
+     * @brief      DFT Spectrum of most recent ring buffer values
+     *
+     * @return     most recent spectrum magnitude bins
+     */
+    const Eigen::VectorXd& spectrum() const { return Y_; }
+
+    /**
+     * @brief      AdaptNotch Parameters
+     *
+     * @return     parameters struct
+     */
+    const Params& params() const { return params_; }
+
   private:
     Params params_; ///< instance parameters
     Eigen::FFT<double> fft_; ///< fft object
@@ -234,6 +248,7 @@ namespace adaptnotch {
     Eigen::VectorXd window_; ///< window for tapering data for FFT
 
     // \brief State
+    Eigen::VectorXd Y_; ///< most recent spectrum
     double peakFreq_; ///< estimated frequency of noise peak in specified range
 
     double input_accumulator_; ///< accumulator for downsampling to fft Fs

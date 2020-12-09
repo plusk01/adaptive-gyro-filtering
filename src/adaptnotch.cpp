@@ -132,7 +132,7 @@ double AdaptiveNotch::findFreqPeak()
   fft_.fwd(Yc, y);
 
   // extract real part
-  const Eigen::VectorXd Y = Yc.array().abs();
+  Y_ = Yc.array().abs();
 
   //
   // Find max bin and max / min components
@@ -144,8 +144,8 @@ double AdaptiveNotch::findFreqPeak()
 
   // max bin/component
   for (size_t i=start_bin_; i<fft_bin_count_; i++) {
-    if (Y(i) > dataMax) {
-      dataMax = Y(i);
+    if (Y_(i) > dataMax) {
+      dataMax = Y_(i);
       binMax = i;
     }
   }
@@ -156,15 +156,15 @@ double AdaptiveNotch::findFreqPeak()
   } else {
     // look for the min below the max peak
     for (size_t i=binMax-1; i>1; i--) {
-      dataMin = Y(i);
+      dataMin = Y_(i);
       // break if the bin below will increase
-      if (Y(i-1) > Y(i)) break;
+      if (Y_(i-1) > Y_(i)) break;
     }
     // look for the min above the max peak
     for (size_t i=binMax+1; i<fft_bin_count_-1; i++) {
-      dataMinHi = Y(i);
+      dataMinHi = Y_(i);
       // break if the bin above will increase
-      if (Y(i) < Y(i+1)) break;
+      if (Y_(i) < Y_(i+1)) break;
     }
     dataMin = std::min(dataMin, dataMinHi);
   }
@@ -174,14 +174,14 @@ double AdaptiveNotch::findFreqPeak()
   //
 
   // weighted mean using peak and shoulder bins
-  double sq = Y(binMax) * Y(binMax);
+  double sq = Y_(binMax) * Y_(binMax);
   double fftSum = sq;
   double fftWeightedSum = sq * binMax;
 
   // accumulate upper shoulder unless it would be Nyquist bin
   int shoulderBin = binMax + 1;
   if (shoulderBin < fft_bin_count_) {
-    sq = Y(shoulderBin) * Y(shoulderBin);
+    sq = Y_(shoulderBin) * Y_(shoulderBin);
     fftSum += sq;
     fftWeightedSum += sq * shoulderBin;
   }
@@ -189,7 +189,7 @@ double AdaptiveNotch::findFreqPeak()
   // accumulate lower shoulder unless it would be DC bin
   if (binMax > 1) {
     shoulderBin = binMax - 1;
-    sq = Y(shoulderBin) * Y(shoulderBin);
+    sq = Y_(shoulderBin) * Y_(shoulderBin);
     fftSum += sq;
     fftWeightedSum += sq * shoulderBin;
   }
