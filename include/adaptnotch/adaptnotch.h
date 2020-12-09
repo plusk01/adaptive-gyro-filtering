@@ -15,18 +15,36 @@
 
 namespace adaptnotch {
 
+  /**
+   * @brief      Ring buffer implementation for applying FFT to chunks of data
+   */
   class RingBuffer
   {
   public:
+    /**
+     * @brief      RingBuffer constructor. Values initialize to zero.
+     *
+     * @param[in]  N     Fixed size of buffer
+     */
     RingBuffer(size_t N) { data_ = Eigen::VectorXd::Zero(N); }
     ~RingBuffer() = default;
 
+    /**
+     * @brief      Push a new element onto the buffer.
+     *
+     * @param[in]  x     Element to add
+     */
     void add(double x)
     {
       data_(idx)= x;
       idx = (idx + 1) % data_.size();
     }
 
+    /**
+     * @brief      Copies the internal buffer into a sequential buffer.
+     *
+     * @return     Vector of elements ordered from last (0) to first (N).
+     */
     Eigen::VectorXd sequentialView() const
     {
       Eigen::VectorXd v = Eigen::VectorXd::Zero(data_.size());
@@ -44,11 +62,16 @@ namespace adaptnotch {
       return v;
     }
 
+    /**
+     * @brief      View internal ring buffer
+     *
+     * @return     View of internal ring buffer
+     */
     const Eigen::VectorXd& data() const { return data_; }
 
   private:
     size_t idx = 0; ///< index of next spot to add element at
-    Eigen::VectorXd data_;
+    Eigen::VectorXd data_; ///< internal ring buffer
   };
 
   class AdaptiveNotch
