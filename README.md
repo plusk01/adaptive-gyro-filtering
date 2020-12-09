@@ -15,6 +15,12 @@ After the dynamic notch algorithm converges to roughly 73 Hz (black vertical lin
 
 <p align="center"><img src=".github/dynnotch.gif" width="100%" /></p>
 
+### C++ Library
+
+This repo also provides a C++ adaptive notch filtering library. An example application is provided that reads the provided IMU data and produces the same results as the MATLAB gif above. The excellent terminal plotting library [`plot`](https://github.com/fbbdev/plot) is included to produce plots (only in the example application) of the spectrum before and after filtering.
+
+<p align="center"><img src=".github/cpp-plot.gif" width="100%" /></p>
+
 ## Technical Description
 
 Gyro samples are stored in a ring buffer, the size of which corresponds to the FFT length. In this example, a 128-length FFT is used. To analyze the spectrum in real-time, a Hann window is used to taper the values on the edges of the buffer (cf. [short-time Fourier transform](https://en.wikipedia.org/wiki/Short-time_Fourier_transform)). The peak finding algorithm to adaptively determine the center frequency of the notch filter searches within a user-defined range. The center frequency is estimated using a weighted mean and smoothing center frequency estimates through an alpha/RCLPF filter.
