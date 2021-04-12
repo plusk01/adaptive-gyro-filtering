@@ -230,6 +230,13 @@ namespace adaptnotch {
      */
     const Params& params() const { return params_; }
 
+    /**
+     * @brief      Returns the current estimated peak frequency
+     *
+     * @return     Estimated frequency of noise peak in Hz
+     */
+    double peakFreq() const { return peakFreq_; }
+
   private:
     Params params_; ///< instance parameters
     Eigen::FFT<double> fft_; ///< fft object

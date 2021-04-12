@@ -200,6 +200,7 @@ int main(int argc, char const *argv[])
   std::cout << "Processed " << timu << " seconds (" << N << " samples) of IMU";
   std::cout << " data in " << duration << " seconds" << std::endl;
   std::cout << "Real-time factor: " << timu / duration << std::endl;
+  std::cout << "Estimated peak freq: " << filter.peakFreq() << std::endl;
 
   //
   // Write data to file
