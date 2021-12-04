@@ -32,3 +32,4 @@ Gyro samples are stored in a ring buffer, the size of which corresponds to the F
 - Biquads: [Nigel Redmon](https://www.earlevel.com/main/2012/11/26/biquad-c-source-code/)
 - Betaflight filtering: [rav's Python code](https://github.com/rav-rav/betaflightCalc/tree/master/src)
 - Other improvements: [Pawel S.'s "Matrix Filter" in iNav](https://quadmeup.com/emuflight-and-inav-matrix-filter/)
+- Excellent notch filter theory and basic implementation video: https://www.youtube.com/watch?v=ysS4bIXFAsU
